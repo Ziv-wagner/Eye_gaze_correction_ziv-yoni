@@ -433,20 +433,20 @@ class gaze_redirection_system:
 
                     if (time.time() - t) > 1:
                         t = time.time()
-
-                    k = cv2.waitKey(10)
-                    if k == ord('q'):
-                        data = pickle.dumps('stop')
-                        self.client_socket.sendall(struct.pack("L", len(data))+data)
-                        time.sleep(3)
-                        cv2.destroyWindow(conf.uid)
-                        self.client_socket.shutdown(socket.SHUT_RDWR)
-                        self.client_socket.close()
-                        vs.release()
-                        # out.release()
-                        self.L_sess.close()
-                        self.R_sess.close()
-                        break
+                    cv2.waitKey(10)
+                    #k = cv2.waitKey(10) #changed
+                    # if k == ord('q'):
+                    #     data = pickle.dumps('stop')
+                    #     self.client_socket.sendall(struct.pack("L", len(data))+data)
+                    #     time.sleep(3)
+                    #     cv2.destroyWindow(conf.uid)
+                    #     self.client_socket.shutdown(socket.SHUT_RDWR)
+                    #     self.client_socket.close()
+                    #     vs.release()
+                    #     # out.release()
+                    #     self.L_sess.close()
+                    #     self.R_sess.close()
+                    #     break
                     redir=True
                     # cv2.waitKey(25)
                     # elif k == ord('r'):
