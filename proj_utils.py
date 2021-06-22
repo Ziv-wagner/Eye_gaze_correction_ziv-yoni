@@ -1,21 +1,3 @@
-# from moviepy.editor import concatenate_videoclips, VideoFileClip
-# import cv2
-# vid2=VideoFileClip("test.avi")
-# vid1=VideoFileClip("out1.avi")
-# fourcc = cv2.VideoWriter_fourcc(*'XVID')
-# # tester = cv2.VideoWriter('test.avi',fourcc, 5.0, (640,480))
-# # cap = cv2.VideoCapture(0)
-# # ret, frame = cap.read()
-# # cap.release()
-# # tester.write(frame)
-# # tester.release()
-# vid=VideoFileClip("test.avi")
-# vid.write_videofile('try_1.mp4')
-# # final_video= concatenate_videoclips([vid1, vid])
-# # final_video.write_videofile('final_video.mp4')
-# # print(int(vid.duration()))
-
-
 import cv2
 import numpy as np
 import math
@@ -24,9 +6,9 @@ from natsort import natsorted
 from moviepy.editor import VideoFileClip, clips_array, vfx
 from moviepy.video.fx.resize import resize
 from moviepy.video.fx.crop import crop
-
+from moviepy.video.fx.margin import margin
 import proj_utils
-
+import proj_config
 
 def concat(p, vid_num, coord):
     img_array = []
@@ -72,39 +54,11 @@ def compose():
 
 
 
-# looking at "i" in seconds --- for example [[0,5],[20,27]] means that we are looking at "i" at 0 to 5 seconds and from 20 to 27
-# t == top ,,, b == bottom ,,, l == left ,,, r == right
-# for noam
-# all the look array
-tl_look = [[12,17],[24,25]]
-tr_look = []
-bl_look = [[7,12],[17,24]]
-br_look = [[3,7]]
-look_arr_tl = [tl_look, tr_look, bl_look, br_look]
-# for yoni
-tl_look = [[17,24]]
-tr_look = [[5,12]]
-bl_look = [[0,5],[12,17]]
-br_look = [[24,25]]
-look_arr_tr = [tl_look, tr_look, bl_look, br_look]
-# for bar
-tl_look = [[6,12],[17,24]]
-tr_look = [[0,6]]
-bl_look = [[12,17]]
-br_look = [[24,25]] #24-25 not very good
-look_arr_bl = [tl_look, tr_look, bl_look, br_look]
-# for ziv
-tl_look = [[24,25]]
-tr_look = [[16,24]]
-bl_look = [[6,16]]
-br_look = [[0,6]]
-look_arr_br = [tl_look, tr_look, bl_look, br_look]
 
-look_arr_all = [look_arr_tl, look_arr_tr, look_arr_bl, look_arr_br]
+look_arr_all = proj_config.get_timing()
 
 
-names_arr = ["noam's screen", "yoni's screen", "bar's screen", "ziv's screen"]
-color_arr = [(0, 0, 255), (0, 255, 0), (204, 153, 255), (200, 200, 0)]
+names_arr, color_arr = proj_config.get_name_color()
 # overlaying the aligned video on the required person + naming the person's screen
 
 
@@ -134,7 +88,7 @@ def overlay(p, i, scr_orient):
         out = cv2.VideoWriter("br" + '/final_' + str(a) + '.avi', fourcc, 30.0, (1400, 840))
 
     if p == "tl":
-        zoom = cv2.VideoCapture('yoni-meet-25-border.mp4')
+        zoom = cv2.VideoCapture('zoom_vid_border.mp4')
     else:
         if i == 0:
             zoom = cv2.VideoCapture("tl" + '/final_' + str(a-1) + '.avi')
@@ -148,7 +102,7 @@ def overlay(p, i, scr_orient):
     # x_center = math.floor(tl_coord[0] + width/2)
     # y_center = math.floor(tl_coord[1] + height/2)
 
-    orig_zoom = cv2.VideoCapture('yoni-meet-25-border.mp4')
+    orig_zoom = cv2.VideoCapture('zoom_vid_border.mp4')
     aligned = cv2.VideoCapture(p + '/look_timing_' + str(i + 1) + '.avi')
     # zoom = cv2.VideoCapture('yoni-meet-25-border.mp4')
 
@@ -318,8 +272,8 @@ def crop_to_align(p, clip):
     yCenter = math.floor((coord[0][1] + coord[1][1]) / 2)
     newClip = crop(clip, x_center=xCenter, y_center=yCenter, width=Height * (4 / 3), height=Height)
     newClip = newClip.resize((640, 480))
-    newClip.write_videofile(p + '/to_aline.MP4')
-    newClip.write_videofile('to_aline.MP4')
+    newClip.write_videofile(p + '/to_align.MP4')
+    #newClip.write_videofile('to_align.MP4')
 
 
 
@@ -339,3 +293,8 @@ def get_coordinates(p):
     height = math.floor(coord[1][1] - coord[0][1])
     width = math.floor(coord[1][0] - coord[0][0])
     return coord, width, height
+
+
+def add_border(zoom_vid):
+    clip = margin(zoom_vid, 60)
+    clip.write_videofile("zoom_vid_border.mp4")

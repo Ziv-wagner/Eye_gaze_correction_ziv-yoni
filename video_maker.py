@@ -25,28 +25,16 @@ from moviepy.video.fx.resize import resize
 
 import regz_socket_MP_FD
 import proj_utils
+import proj_config
 # regz_socket_MP_FD#.regz([600,300])
 
 
 people = ["tl","tr","bl","br"]  # the real screen
 people_num = [0,1,2,3]
-noam_pcy = -10
-noam_focal = 920
-yoni_pcy = -9
-yoni_focal = 880
-ziv_pcy = -9
-ziv_focal = 920
-bar_pcy = -19
-bar_focal = 750
-
-coord_orig = [[380,190],[900,190],[380,480],[900,480]]  # people centers , tl,tr,bl,br
-vec_table = [[0,0], [520,-290], [520,0], [520,290], [0,290], [-520,290], [-520,0], [-520,-290], [0,-290]]  # like a clock, 1 is up right, 8 is up
-
-# ------------screen orientations----------
-# the owner of screen 0 is tl, screen 1 is tr, and so on
-scr_orient = [[0,1,2,3], [2,1,3,0], [1,0,2,3], [3,0,1,2]]
+tl_pcx, tl_pcy, tl_pcz, tl_focal, tl_sw, tl_sh, tr_pcx, tr_pcy, tr_pcz, tr_focal, tr_sw, tr_sh, bl_pcx, bl_pcy, bl_pcz, bl_focal, bl_sw, bl_sh, br_pcx, br_pcy, br_pcz, br_focal, br_sw, br_sh, coord_orig, scr_orient = proj_config.get_proj_config()
 all_references = []
 ref_oneman = []
+
 for p in people_num:
     for s in range(4):  # all screens
         if s == 0:
@@ -72,7 +60,11 @@ for p in people_num:
 
 
 # loops = 1
-what_to_do = "timing overlay compose"
+what_to_do = "all"
+
+if what_to_do.count("border") > 0:
+    if __name__ == '__main__':
+        proj_utils.add_border(VideoFileClip("zoom_vid.mp4"))
 
 for p in people:
     p_index = people.index(p)
@@ -83,19 +75,25 @@ for p in people:
     conf,_ = get_config()
     # set config to each participant
     if p == "tl":
-        conf.P_c_y = noam_pcy
-        conf.f = noam_focal
+        conf.P_c_y = tl_pcy
+        conf.f = tl_focal
+        conf.S_W = tl_sw
+        conf.S_H = tl_sh
     if p == "tr":
-        conf.P_c_y = yoni_pcy
-        conf.f = yoni_focal
+        conf.P_c_y = tr_pcy
+        conf.f = tr_focal
+        conf.S_W = tr_sw
+        conf.S_H = tr_sh
     if p == "bl":
-        conf.P_c_y = bar_pcy
-        conf.f = bar_focal
-        conf.S_W = 51
-        conf.S_H = 30
+        conf.P_c_y = bl_pcy
+        conf.f = bl_focal
+        conf.S_W = bl_sw
+        conf.S_H = bl_sh
     if p == "br":
-        conf.P_c_y = ziv_pcy
-        conf.f = ziv_focal
+        conf.P_c_y = br_pcy
+        conf.f = br_focal
+        conf.S_W = br_sw
+        conf.S_H = br_sh
 
     if conf.mod == 'flx':
         import flx as model
@@ -115,13 +113,9 @@ for p in people:
     model_dir
     print(Rs)
 
-
-
-
-
     if what_to_do == "all" or what_to_do.count("to_align") > 0:
         if __name__ == '__main__':
-            clip = VideoFileClip("yoni-meet-25-border.mp4")
+            clip = VideoFileClip("zoom_vid_border.mp4")
             proj_utils.crop_to_align(p, clip)
 
             # newClip = crop(clip, x_center=x_center_tr, y_center=y_center_tr, width=height_tr*(4/3), height=height_tr)
@@ -129,13 +123,12 @@ for p in people:
             # newClip.write_videofile('to_aline.MP4')
 
     # this is how to call the regz_socket_MP_FD
-    #coord = [[600,300],[600,700],[1300,300],[1300,700]]  # of the big screen
-    #coord = [[380,190],[900,190],[380,480],[900,480]]  # of ziv's small screen
+
 
     if what_to_do == "all" or what_to_do.count("aligned") > 0:
         if __name__ == '__main__':
-            clip = VideoFileClip(p + '/to_aline.MP4')
-            clip.write_videofile('to_aline.MP4')
+            clip = VideoFileClip(p + '/to_align.MP4')
+            clip.write_videofile('to_align.MP4')
         for i in range(loops):
 
             if __name__ == '__main__':
