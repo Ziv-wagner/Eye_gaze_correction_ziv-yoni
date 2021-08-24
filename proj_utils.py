@@ -43,11 +43,11 @@ def concat(p, vid_num, coord):
 
 def compose():
 
-    clip1 = resize(VideoFileClip("tl/final_3.avi"), 0.5)  # add 10px contour
+    clip1 = resize(VideoFileClip("tl/final_3.avi"), 0.5)  # resize all the videos to half height and half width
     clip2 = resize(VideoFileClip("tr/final_3.avi"), 0.5)
     clip3 = resize(VideoFileClip("bl/final_3.avi"), 0.5)
     clip4 = resize(VideoFileClip("br/final_3.avi"), 0.5)
-    final_clip = clips_array([[clip1, clip2], [clip3, clip4]])
+    final_clip = clips_array([[clip1, clip2], [clip3, clip4]]) # arrange the 4 videos in the final video
     final_clip.write_videofile("all_screens.mp4")
 
 
@@ -59,11 +59,10 @@ look_arr_all = proj_config.get_timing()
 
 
 names_arr, color_arr = proj_config.get_name_color()
-# overlaying the aligned video on the required person + naming the person's screen
-
 
 people = ["tl","tr","bl","br"]
 
+# overlaying the aligned video on the required person + naming the person's screen
 def overlay(p, i, scr_orient):
     a = people.index(p)
     p_spot_in_i = scr_orient.index(a)
@@ -78,7 +77,7 @@ def overlay(p, i, scr_orient):
 
     a = people.index(p)
 
-    if i == 0:
+    if i == 0: # creating a new video according to the person i
         out = cv2.VideoWriter("tl" + '/final_' + str(a) + '.avi', fourcc, 30.0, (1400, 840))
     if i == 1:
         out = cv2.VideoWriter("tr" + '/final_' + str(a) + '.avi', fourcc, 30.0, (1400, 840))
@@ -87,7 +86,7 @@ def overlay(p, i, scr_orient):
     if i == 3:
         out = cv2.VideoWriter("br" + '/final_' + str(a) + '.avi', fourcc, 30.0, (1400, 840))
 
-    if p == "tl":
+    if p == "tl": # loading the latest updated video according to the person i
         zoom = cv2.VideoCapture('zoom_vid_border.mp4')
     else:
         if i == 0:
@@ -98,13 +97,9 @@ def overlay(p, i, scr_orient):
             zoom = cv2.VideoCapture("bl" + '/final_' + str(a-1) + '.avi')
         if i == 3:
             zoom = cv2.VideoCapture("br" + '/final_' + str(a-1) + '.avi')
-    # out = cv2.VideoWriter('final_' + str(i + 1) + '.avi', fourcc, 30.0, (1400, 840))
-    # x_center = math.floor(tl_coord[0] + width/2)
-    # y_center = math.floor(tl_coord[1] + height/2)
 
-    orig_zoom = cv2.VideoCapture('zoom_vid_border.mp4')
-    aligned = cv2.VideoCapture(p + '/look_timing_' + str(i + 1) + '.avi')
-    # zoom = cv2.VideoCapture('yoni-meet-25-border.mp4')
+    orig_zoom = cv2.VideoCapture('zoom_vid_border.mp4') # loads the original video
+    aligned = cv2.VideoCapture(p + '/look_timing_' + str(i + 1) + '.avi') # loads the aligned video of person p
 
     # --------- here it's all for the square when looking-------
     look_arr = look_arr_all[a]
@@ -118,39 +113,35 @@ def overlay(p, i, scr_orient):
         ret_orig, orig_frame = orig_zoom.read()
 
         if ret == True and ret_zoom == True and ret_orig == True:
-            # out1.write(frame)
-            # frame = cv2.flip(frame,0)
             frame = cv2.resize(frame, (math.floor(height*(4/3)), height))
-            # zoom_frame[60:357, 642:1168]
             zoom_frame = cv2.putText(zoom_frame, names_arr[i], (460,50), cv2.FONT_HERSHEY_SIMPLEX, 2, color_arr[i], 4, cv2.LINE_AA)
-
+			
+			# pastes the aligned video on the latest updated video that we created
             zoom_frame[tl_coord[1]:tl_coord[1] + height, tl_coord[0]:tl_coord[0] + width] = orig_frame[orig_coord[1]:orig_coord[1] + height, orig_coord[0] + width - 1:orig_coord[0] - 1:-1]
             zoom_frame[tl_coord[1]:tl_coord[1] + height, x_center - math.floor(height*(2/3)):x_center + math.floor(height*(2/3))] = frame
 
             # --------- here it's all for the square when looking-------
-            sec = math.floor(frame_num / 30)
+            sec = math.floor(frame_num / 30) # calculate the time of the video (the video is 30 fps)
 
-
-            if interval < len(look_arr[i]):
+			# draw a rectangle around the man to make it stand out
+            if interval < len(look_arr[i]): # checks if man 'p' look at man 'i'
                 if look_arr[i][interval][0] <= sec < look_arr[i][interval][1]:
                     thick = 4
+					# draw the rectangle around man 'p' in the screen of man 'i'
                     zoom_frame = cv2.line(zoom_frame, (coord[0][0] + thick, coord[0][1] + thick), (coord[1][0] - thick, coord[0][1] + thick), color_arr[a], thick*2)  # top line
                     zoom_frame = cv2.line(zoom_frame, (coord[0][0] + thick, coord[1][1] - thick), (coord[1][0] - thick, coord[1][1] - thick), color_arr[a], thick*2)  # bottom line
                     zoom_frame = cv2.line(zoom_frame, (coord[0][0] + thick, coord[0][1] + thick), (coord[0][0] + thick, coord[1][1] - thick), color_arr[a], thick*2)  # left line
                     zoom_frame = cv2.line(zoom_frame, (coord[1][0] - thick, coord[0][1] + thick), (coord[1][0] - thick, coord[1][1] - thick), color_arr[a], thick*2)  # right line
-                    # add here a bottom line --- means that the person is looking straight to you
                 elif sec >= look_arr[i][interval][1]:
                     interval += 1
             frame_num += 1
             # --------------------------------------------------------
             # write the flipped frame
             out.write(zoom_frame)
-
-            # cv2.imshow('frame', frame)
-
+			
         else:
             break
-    out.release()
+    out.release() # finishes the videos
     aligned.release()
     zoom.release()
     orig_zoom.release()
@@ -164,7 +155,7 @@ def overlay(p, i, scr_orient):
 def look_timing(p, i, coord, scr_orient):
     a = people.index(p)
     ref_points = []
-    for men in range(4):
+    for men in range(4): # calculates all the directions that we need to align
         p_spot_in_i = coord[scr_orient.index(a)]
         men_spot_in_i = coord[scr_orient.index(men)]
         orig_vec = np.subtract(coord[men], coord[a])
@@ -174,12 +165,11 @@ def look_timing(p, i, coord, scr_orient):
         ref_points.append(wanted_coord)
     print("p=" + str(p) + " , i=" + str(i) + " , orient= " + str(scr_orient) + " , ref_points = " + str(ref_points))
     owner_clip = cv2.VideoCapture(p + "/aligned_" + str(coord[i]) + ".avi")
-    tl_clip = cv2.VideoCapture(p + "/aligned_" + str(ref_points[0].tolist()) + ".avi")
+    tl_clip = cv2.VideoCapture(p + "/aligned_" + str(ref_points[0].tolist()) + ".avi") # loads the aligned videos
     tr_clip = cv2.VideoCapture(p + "/aligned_" + str(ref_points[1].tolist()) + ".avi")
     bl_clip = cv2.VideoCapture(p + "/aligned_" + str(ref_points[2].tolist()) + ".avi")
     br_clip = cv2.VideoCapture(p + "/aligned_" + str(ref_points[3].tolist()) + ".avi")
-    look_arr = look_arr_all[a]
-    # look_arr = [tl_look, tr_look, bl_look, br_look]
+    look_arr = look_arr_all[a] # gets the look array of this person
     size = (640,480)
 
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -196,23 +186,18 @@ def look_timing(p, i, coord, scr_orient):
         owner_ret, owner_frame = owner_clip.read()
 
         if tl_ret == True and tr_ret == True and bl_ret == True and br_ret == True and owner_ret == True:
-            sec = math.floor(frame_num/30)
-            # if sec == 2 and a == 1:
-            #     stop = 0
-            # finding the men we are looking at at this second
+            sec = math.floor(frame_num/30) # calculate the time of the video (the video is 30 fps)
             finito = 0
             look_at = a
-            for u in range(len(look_arr)):
+            for u in range(len(look_arr)): # finding the man we are looking at this second
                 for j in range(len(look_arr[u])):
                     if look_arr[u][j][0] <= sec < look_arr[u][j][1]:
                         finito = 1
-                        look_at = u
+                        look_at = u # the man looks at man 'u'
                         break
                 if finito == 1:
                     break
-            # if finito == 0:
-            #     print("wtf is this and time = " + str(sec))
-            if look_at == i:
+            if look_at == i: # writes the right frame to the final output video
                 out.write(owner_frame)
             elif look_at == 0:
                 out.write(tl_frame)
@@ -224,28 +209,12 @@ def look_timing(p, i, coord, scr_orient):
                 out.write(br_frame)
             else:
                 out.write(tl_frame)
-                print("wtf is this and time = " + str(sec))  # shouldnt happen
-
-            # if interval < len(look_arr[i]):
-            #     if sec >= look_arr[i][interval][0] and sec < look_arr[i][interval][1] :
-            #         # frame = cv2.line(frame, (0,479) , (639,479), color_arr[a], 15)
-            #         # frame = cv2.line(frame, (0, 0), (639, 0), color_arr[a], 15)
-            #         out.write(frame)
-            #         # add here a bottom line --- means that the person is looking straight to you
-            #     elif sec >= look_arr[i][interval][1]:
-            #         interval += 1
-            #         out.write(changed_frame)
-            #     else:
-            #         out.write(changed_frame)
-            # else:
-            #     out.write(changed_frame)
-
+				
             frame_num += 1
-            # print(str(frame_num) + "   " + str(sec))
         else:
             break
-    # print(sec)
-    out.release()
+    
+    out.release() # finishes all the videos
     tl_clip.release()
     tr_clip.release()
     bl_clip.release()
@@ -254,28 +223,14 @@ def look_timing(p, i, coord, scr_orient):
 
 
 # ----------crop zoom video to a single man video----------#
-    #all video - (top left = (60,60), bottom right = (1340,780))
-    # tr = [[700, 60], [1340, 420]]
-    # x_center_tr = math.floor((tr[0][0] + tr[1][0])/2)
-    # y_center_tr = math.floor((tr[0][1] + tr[1][1])/2)
-    # height_tr = math.floor(tr[1][1] - tr[0][1])
-    # width_tr = math.floor(tr[1][0] - tr[0][0])
-#     tl = [[60, 60], [700, 420]]
-#     tr = [[700, 60], [1340, 420]]
-#     bl = [[60,420], [700,780]]
-#     br = [[700,420], [1340,780]]
-    # top right = x_center=905 , y_center=209, width=528, height=299
 def crop_to_align(p, clip):
-    a = people.index(p)
-    coord, Width, Height = proj_utils.get_coordinates(a)
-    xCenter = math.floor((coord[0][0] + coord[1][0]) / 2)
+    a = people.index(p) # get the index in the array according to the people
+    coord, Width, Height = proj_utils.get_coordinates(a) # get the coordinates, the width and the height of the place of the people 'p' in the video
+    xCenter = math.floor((coord[0][0] + coord[1][0]) / 2) # calculate the center of the place of the people 'p' in the video
     yCenter = math.floor((coord[0][1] + coord[1][1]) / 2)
-    newClip = crop(clip, x_center=xCenter, y_center=yCenter, width=Height * (4 / 3), height=Height)
-    newClip = newClip.resize((640, 480))
+    newClip = crop(clip, x_center=xCenter, y_center=yCenter, width=Height * (4 / 3), height=Height) # crop the people from the video
+    newClip = newClip.resize((640, 480)) # resize for saving the height-width ratio
     newClip.write_videofile(p + '/to_align.MP4')
-    #newClip.write_videofile('to_align.MP4')
-
-
 
 
 def get_coordinates(p):
@@ -288,13 +243,13 @@ def get_coordinates(p):
         coord = [[60, 420], [700, 780]]
     if p == 3:
         coord = [[700, 420], [1340, 780]]
-    xCenter = math.floor((coord[0][0] + coord[1][0]) / 2)
+    xCenter = math.floor((coord[0][0] + coord[1][0]) / 2) # calculate the center of the place of the people 'p' in the video
     yCenter = math.floor((coord[0][1] + coord[1][1]) / 2)
-    height = math.floor(coord[1][1] - coord[0][1])
+    height = math.floor(coord[1][1] - coord[0][1]) # calculate the height and the width of the place of the people 'p' in the video
     width = math.floor(coord[1][0] - coord[0][0])
     return coord, width, height
 
 
 def add_border(zoom_vid):
-    clip = margin(zoom_vid, 60)
+    clip = margin(zoom_vid, 60) # add a border to the video (we calculated with border the points)
     clip.write_videofile("zoom_vid_border.mp4")
