@@ -70,7 +70,7 @@ def get_eye_pos(shape, pos = "L"):
 
 
 # vs = cv2.VideoCapture(0)
-vs = cv2.VideoCapture('to_aline.MP4')
+vs = cv2.VideoCapture('to_align.MP4')
 while True:
     ret, recv_frame = vs.read()
     if ret == True:
